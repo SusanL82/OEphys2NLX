@@ -65,7 +65,7 @@ for tetnum in TetList:
     thistet = thistet.set_probegroup(myprobe)
 
     # preprocess (filter)
-    thistet_f = bandpass_filter(thistet, freq_min=300, freq_max=6000)
+    thistet_f = bandpass_filter(thistet, freq_min=600, freq_max=6000)
 
     #detect peaks
     detectradius = 30 #tetrode map is 10x10um square, thsi should capture all spikes in this channelgroup
