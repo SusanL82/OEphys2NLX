@@ -8,26 +8,24 @@ from scipy.io import savemat
 from tqdm import tqdm
 
 
-InFolder = "C:/Users/susan/Desktop/2023-06-04_13-47-08"
-OutFolder = "C:/Users/susan/Desktop/klustatest"
-Probepath ="C:/Users/susan/Desktop/klustatest"
+InFolder = "E:/Test1/2024-01-29_12-16-36/Record Node 107"
+OutFolder = "C:/Users/roychoun/Desktop/klustatest/"
+Probepath ="C:/Users/roychoun/Desktop"
 ChanList = 'KKtetlist2.txt' # text file listing good and bad channels
 TetList = [1,2,3] #analyse only these tetrodes (1-based, as on drive)
 
 spike_thresh = 5 # detection threshold for spike detection is spike_thresh* signal SD
-spike_sign = 'neg' #detect negative peaks only. can be: 'neg', 'pos', 'both'
+spike_sign = 'pos' #detect peaks. can be: 'neg', 'pos', 'both'
 
 ################################################################################################
 # assign channel numbers, group by tetrode
-tetgrouping = np.array([1,1,1,1,2,2,2,2,3,3,3,
-               3,4,4,4,4,5,5,5,5,6,6,6,
-               6,7,7,7,7,8,8,8,8])
+tetgrouping = np.array([2,2,2,2,3,3,3,3,7,7,7,7,6,6,6,6,5,5,5,5,4,4,4,4,0,0,0,0,1,1,1,1])
 
 # read bad channel list, set bad channels to 17
 tetlist = np.loadtxt(InFolder + '/' + ChanList,
                  delimiter=",")
 
-for tetnum in range(16):
+for tetnum in range(8):
         thistet = np.where(tetgrouping==tetnum)
         thistet = np.array(thistet)
         thesewires = tetlist[tetnum,1:5]
@@ -45,6 +43,7 @@ all_chan_ids = MyRec.get_channel_ids()
 for tetnum in TetList:
 
     tet_chan_ids = all_chan_ids[np.where(tetgrouping == tetnum-1)]
+    tetname = TetList[tetnum-1]
 
     if np.size(tet_chan_ids)>2:
         
@@ -69,8 +68,7 @@ for tetnum in TetList:
 
     #detect peaks
     detectradius = 30 #tetrode map is 10x10um square, thsi should capture all spikes in this channelgroup
-    TetPeaks = detect_peaks(thistet_f, method='locally_exclusive', pipeline_nodes=None, gather_mode='memory', folder=None, names=None,
-                            peak_sign=spike_sign, detect_threshold=spike_thresh, exclude_sweep_ms=0.1, radius_um=detectradius)
+    TetPeaks = detect_peaks(thistet_f, method='locally_exclusive', peak_sign=spike_sign, detect_threshold=spike_thresh, exclude_sweep_ms=0.1, local_radius_um=detectradius, noise_levels=None,)
 
     # get waveforms. must be 32 samples long, I'm setting peak at sample 8 (same as NLX)
     prepeak = 8
@@ -78,10 +76,10 @@ for tetnum in TetList:
 
     print('extracting waveforms')
 
-    allWFs = np.zeros([32, 4, len(TetPeaks['sample_index'])], dtype='int16')
-    for p in tqdm(range(len(TetPeaks['sample_index'])), desc="collecting waveforms"):
-        sf = TetPeaks['sample_index'][p] - prepeak
-        ef = TetPeaks['sample_index'][p] + postpeak
+    allWFs = np.zeros([32, 4, len(TetPeaks['sample_ind'])], dtype='int16')
+    for p in tqdm(range(len(TetPeaks['sample_ind'])), desc="collecting waveforms"):
+        sf = TetPeaks['sample_ind'][p] - prepeak
+        ef = TetPeaks['sample_ind'][p] + postpeak
 
         thisWF = thistet_f.get_traces(segment_index=None, start_frame=sf, end_frame=ef)
 
@@ -93,5 +91,5 @@ for tetnum in TetList:
 
    #save peaks to mat file (for later processing with Mat2NlxSpike to generate .ntt file)
     print('saving to mat file')
-    outname = OutFolder+"tt"+str(thistet) + '.mat'
-    savemat(outname, {"Timestamps":TetPeaks['sample_index'], "Spikes": allWFs})
+    outname = OutFolder+"tt"+str(tetname) + '.mat'
+    savemat(outname, {"Timestamps":TetPeaks['sample_ind'], "Spikes": allWFs})
