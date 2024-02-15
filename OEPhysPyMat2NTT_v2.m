@@ -38,7 +38,7 @@ Spikes = -Spikes; %flip waveforms
 %%
 if addScFac == 1
     
-    maxval = max(max(max((Spikes))));
+        maxval = max(max(max((abs(Spikes)))));
     ScFac = 25000/maxval;
     ScFac = round(ScFac);
     
